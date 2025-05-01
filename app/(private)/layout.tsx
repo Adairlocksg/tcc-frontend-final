@@ -1,9 +1,9 @@
 import type React from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
+import { MobileNav } from "@/components/mobile-nav";
 import "./globals.css";
-import { ToasterProvider } from "@/components/toaster-provider";
-import { ReactQueryProvider } from "@/components/react-query-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,7 +11,6 @@ export const metadata = {
   title: "Financial Management App",
   description: "Track and manage expenses with friends and family",
   manifest: "/manifest.json",
-  generator: "v0.dev",
 };
 
 export default function RootLayout({
@@ -23,12 +22,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-pattern`}>
         <ThemeProvider attribute="class" defaultTheme="dark">
-          <ReactQueryProvider>
-            <div className="flex min-h-screen items-center justify-center">
-              {children}
-            </div>
-          </ReactQueryProvider>
-          <ToasterProvider />
+          <div className="flex min-h-screen w-full flex-col">
+            <main className="flex-1 pb-16">{children}</main>
+            <MobileNav />
+          </div>
+          <Toaster position="top-center" />
         </ThemeProvider>
       </body>
     </html>

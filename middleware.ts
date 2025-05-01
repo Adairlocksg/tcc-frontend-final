@@ -7,7 +7,6 @@ const REDIRECT_WHEN_AUTHENTICATED_ROUTE = "/";
 const publicRoutes = [
   { path: "/login", whenAuthenticated: "redirect" },
   { path: "/register", whenAuthenticated: "redirect" },
-  // { path: "/pricing", whenAuthenticated: "next" }, // Exemplo de rota pública acessível mesmo autenticado
 ] as const;
 
 function isTokenValid(token: string): boolean {

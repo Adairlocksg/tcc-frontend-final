@@ -13,15 +13,19 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { LoginDto } from "@/lib/users";
+import { useLogin } from "@/hooks/use-login";
+import { Loader2, LogIn } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Usuário obrigatório"),
-  password: z.string().min(6, "Senha precisa ter no mínimo 6 caracteres"),
+  password: z.string(),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const { mutate: login, isPending } = useLogin();
   const {
     register,
     handleSubmit,
@@ -31,20 +35,22 @@ export default function Login() {
   });
 
   function onSubmit(data: LoginForm) {
-    console.log(data);
-    // Chamar API de login aqui
+    const dto: LoginDto = {
+      userName: data.username,
+      password: data.password,
+    };
+
+    login(dto);
   }
 
   return (
     <Card className="w-full max-w-sm shadow-lg">
-      <CardHeader className="text-center text-2xl font-bold">
-        Login
-      </CardHeader>
+      <CardHeader className="text-center text-2xl font-bold">Login</CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Usuário</Label>
-            <Input  
+            <Input
               id="username"
               placeholder="Digite seu usuário"
               {...register("username")}
@@ -67,6 +73,7 @@ export default function Login() {
           </div>
           <Button type="submit" className="w-full">
             Entrar
+            {isPending ? <Loader2 className="animate-spin" /> : <LogIn />}
           </Button>
         </form>
       </CardContent>
