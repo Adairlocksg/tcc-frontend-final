@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useState } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,27 +14,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, Loader2, Plus } from "lucide-react";
 import { CategoryDto, createCategory } from "@/lib/categories";
-import { getGroup } from "@/lib/groups";
-import { useEffect } from "react";
 import { z } from "zod";
 import { useCreateCategory } from "@/hooks/use-create-category";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-interface NewCategoryPageProps {
-  params: {
-    id: string;
-  };
-}
 const createCategorySchema = z.object({
   description: z.string().min(1, "Descrição obrigatória"),
 });
 
 type CreateCategoryForm = z.infer<typeof createCategorySchema>;
-export default function NewCategoryPage({ params }: NewCategoryPageProps) {
+export default function NewCategoryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: groupId } = use(params);
   const router = useRouter();
   const { mutate: createCategory, isPending } = useCreateCategory();
-  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
@@ -50,7 +46,7 @@ export default function NewCategoryPage({ params }: NewCategoryPageProps) {
       description: data.description,
     };
 
-    createCategory({ id: params.id, dto });
+    createCategory({ id: groupId, dto });
   }
 
   return (
@@ -73,7 +69,7 @@ export default function NewCategoryPage({ params }: NewCategoryPageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Category Name</Label>
+              <Label htmlFor="name">Descrição</Label>
               <Input
                 id="name"
                 placeholder="ex. Comida, Transporte, Entretenimento"
@@ -87,7 +83,7 @@ export default function NewCategoryPage({ params }: NewCategoryPageProps) {
             )}
           </CardContent>
           <CardFooter className="flex justify-end">
-            <Button type="submit" disabled={isLoading} className="w-full">
+            <Button type="submit" disabled={isPending} className="w-full">
               Criar categoria
               {isPending ? <Loader2 className="animate-spin" /> : <Plus />}
             </Button>

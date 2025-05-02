@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +22,6 @@ import {
   Group,
 } from "@/lib/groups";
 import { getGroupExpenses } from "@/lib/expenses";
-import { getCategories } from "@/lib/categories";
 import {
   format,
   startOfMonth,
@@ -33,24 +32,28 @@ import {
 } from "date-fns";
 import { CategoryList } from "@/components/category-list";
 import { GroupMembers } from "@/components/group-members";
+import { CategorySelect } from "@/components/category-select";
+import { useQueryClient } from "@tanstack/react-query";
+import { GroupLinkDialog } from "@/components/group-link-dialog";
 
-interface GroupPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function GroupPage({ params }: GroupPageProps) {
+export default function GroupPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: groupId } = use(params);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [group, setGroup] = useState<Group | null>(null);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [allExpenses, setAllExpenses] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(
     format(new Date(), "yyyy-MM")
   );
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState("expenses");
@@ -58,17 +61,14 @@ export default function GroupPage({ params }: GroupPageProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [groupData, expensesData, categoriesData, membersData] =
-          await Promise.all([
-            getGroup(params?.id),
-            getGroupExpenses(params?.id),
-            getCategories(params.id),
-            getGroupMembers(params.id),
-          ]);
+        const [groupData, expensesData, membersData] = await Promise.all([
+          getGroup(groupId),
+          getGroupExpenses(groupId),
+          getGroupMembers(groupId),
+        ]);
 
         setGroup(groupData);
         setAllExpenses(expensesData);
-        setCategories(categoriesData);
         setMembers(membersData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -78,7 +78,7 @@ export default function GroupPage({ params }: GroupPageProps) {
     };
 
     fetchData();
-  }, [params.id]);
+  }, [groupId]);
 
   // Generate last 12 months for the filter
   const monthOptions = Array.from({ length: 12 }, (_, i) => {
@@ -111,7 +111,7 @@ export default function GroupPage({ params }: GroupPageProps) {
     if (!group) return;
 
     try {
-      await setFavoriteGroup(params.id);
+      await setFavoriteGroup(groupId);
       setGroup({ ...group, favorite: !group.favorite });
     } catch (error) {
       console.error("Failed to set favorite group:", error);
@@ -144,6 +144,9 @@ export default function GroupPage({ params }: GroupPageProps) {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    if (value === "categories") {
+      queryClient.invalidateQueries({ queryKey: ["categories", group.id] });
+    }
   };
 
   return (
@@ -157,15 +160,22 @@ export default function GroupPage({ params }: GroupPageProps) {
             <ChevronLeft className="mr-1 h-4 w-4" />
             Back
           </button>
-          <button onClick={handleFavorite}>
-            <Star
-              className={`h-6 w-6 ${
-                group.favorite
-                  ? "fill-amber-500 text-amber-500"
-                  : "text-muted-foreground"
-              }`}
+          <div className="flex items-center gap-2">
+            <GroupLinkDialog
+              groupId={group.id}
+              open={linkDialogOpen}
+              setOpen={setLinkDialogOpen}
             />
-          </button>
+            <button onClick={handleFavorite}>
+              <Star
+                className={`h-6 w-6 ${
+                  group.favorite
+                    ? "fill-amber-500 text-amber-500"
+                    : "text-muted-foreground"
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         <div className="mb-4">
@@ -208,7 +218,11 @@ export default function GroupPage({ params }: GroupPageProps) {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
@@ -229,31 +243,20 @@ export default function GroupPage({ params }: GroupPageProps) {
             <Button
               size="sm"
               className="flex items-center gap-1"
-              onClick={() => router.push(`/groups/${params.id}/expenses/new`)}
+              onClick={() => router.push(`/groups/${group.id}/expenses/new`)}
             >
               <Plus className="h-4 w-4" />
-              Add Expense
+              Nova despesa
             </Button>
           </div>
 
           {showFilters && (
             <div className="mb-4">
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect
+                groupId={group.id}
+                selectedCategory={selectedCategory}
+                onChange={setSelectedCategory}
+              />
             </div>
           )}
 
@@ -264,7 +267,7 @@ export default function GroupPage({ params }: GroupPageProps) {
                 {format(new Date(selectedMonth), "MMMM yyyy")}
               </p>
               <Button
-                onClick={() => router.push(`/groups/${params.id}/expenses/new`)}
+                onClick={() => router.push(`/groups/${groupId}/expenses/new`)}
                 className="flex items-center gap-1"
               >
                 <Plus className="h-4 w-4" />
@@ -333,22 +336,22 @@ export default function GroupPage({ params }: GroupPageProps) {
 
         <TabsContent value="categories" className="mt-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-medium">Categories</h3>
+            <h3 className="font-medium">Categorias</h3>
             <Button
               size="sm"
               className="flex items-center gap-1"
-              onClick={() => router.push(`/groups/${params.id}/categories/new`)}
+              onClick={() => router.push(`/groups/${groupId}/categories/new`)}
             >
               <Plus className="h-4 w-4" />
-              Add Category
+              Nova categoria
             </Button>
           </div>
-          <CategoryList groupId={params.id} isAdmin={true} />
+          <CategoryList groupId={groupId} />
         </TabsContent>
 
         <TabsContent value="members" className="mt-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-medium">Members</h3>
+            <h3 className="font-medium">Membros</h3>
             <Button
               size="sm"
               variant="outline"
@@ -359,7 +362,7 @@ export default function GroupPage({ params }: GroupPageProps) {
               Invite
             </Button>
           </div>
-          <GroupMembers groupId={params.id} isAdmin={true} />
+          <GroupMembers groupId={groupId} isAdmin={true} />
         </TabsContent>
       </Tabs>
     </div>

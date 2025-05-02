@@ -138,7 +138,7 @@ export default function GroupsPage() {
                   size="sm"
                   onClick={() => router.push(`/groups/${group.id}`)}
                 >
-                  View Details
+                  Ver detalhes
                 </Button>
               </CardFooter>
             </Card>

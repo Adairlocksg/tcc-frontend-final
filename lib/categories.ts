@@ -14,7 +14,11 @@ export interface CategoryDto {
 }
 
 export async function getCategories(groupId: string): Promise<Category[]> {
-  return [];
+  const response = await api.get<ApiResponse<Category[]>>(
+    `groups/${groupId}/categories`
+  );
+
+  return response.data.content;
 }
 
 export async function createCategory(
@@ -32,9 +36,14 @@ export async function createCategory(
 export async function updateCategory(
   groupId: string,
   categoryId: string,
-  data: Partial<Category>
-): Promise<void> {
-  // In a real app, this would update the database
+  dto: CategoryDto
+): Promise<Category> {
+  const response = await api.put<ApiResponse<Category>>(
+    `groups/${groupId}/categories/${categoryId}`,
+    dto
+  );
+
+  return response.data.content;
 }
 
 export async function deleteCategory(

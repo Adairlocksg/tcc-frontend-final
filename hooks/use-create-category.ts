@@ -14,10 +14,10 @@ export function useCreateCategory() {
   return useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: CategoryDto }) =>
       createCategory(id, dto),
-    onSuccess: (id: string) => {
+    onSuccess: () => {
       toast.success("Categoria criada com sucesso!");
       router.back();
-    //   queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error: AxiosError<ApiResponse<string>>) => {
       toast.error(error?.response?.data?.message);
