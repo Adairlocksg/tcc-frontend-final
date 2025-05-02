@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 
 const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = "/login";
 const REDIRECT_WHEN_AUTHENTICATED_ROUTE = "/";
@@ -10,25 +9,13 @@ const publicRoutes = [
 ] as const;
 
 function isTokenValid(token: string): boolean {
-  console.log(token);
-  // try {
-  //     const decoded = jwtDecode(token);
-  //     const currentTime = Math.floor(Date.now() / 1000);
-
-  //     if (decoded.exp && decoded.exp < currentTime) return false;
-  //     return true;
-  // } catch (error) {
-  //     console.error("Erro ao decodificar o token:", error);
-  //     return false;
-  // }
-
   return !!token;
 }
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const publicRoute = publicRoutes.find((route) => route.path === path);
-  const authToken = request.cookies.get("token")?.value;
+  const authToken = request.cookies.get("token_share_the_bill")?.value;
   // Se a rota é pública e não há token, permita o acesso
   if (!authToken && publicRoute) {
     return NextResponse.next();
@@ -61,7 +48,7 @@ export async function middleware(request: NextRequest) {
       redirectUrl.pathname = REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE;
 
       const response = NextResponse.redirect(redirectUrl);
-      response.cookies.delete("token"); // Remove o token inválido
+      response.cookies.delete("token_share_the_bill"); // Remove o token inválido
       return response;
     }
 

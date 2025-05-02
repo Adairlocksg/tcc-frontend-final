@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { login } from "@/lib/users";
 import { toast } from "sonner";
-import { api, ApiResponse } from "@/lib/api";
+import { ApiResponse } from "@/lib/api";
 import { AxiosError } from "axios";
 
 export function useLogin() {
@@ -14,8 +14,7 @@ export function useLogin() {
     mutationFn: login,
     onSuccess: (token: string) => {
       toast.success("Login realizado com sucesso!");
-      document.cookie = `token=${token}`;
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      document.cookie = `token_share_the_bill=${token}`;
       router.push("/");
     },
     onError: (error: AxiosError<ApiResponse<string>>) => {

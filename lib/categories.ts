@@ -1,60 +1,43 @@
 // This is a mock implementation. In a real app, you would use a database.
 
-interface Category {
-  id: string
-  name: string
-  active: boolean
+import { api, ApiResponse, Id } from "./api";
+
+export interface Category {
+  id: string;
+  description: string;
+  groupId: string;
+  active: boolean;
 }
 
-// Mock data
-const mockCategories: Record<string, Category[]> = {
-  "group-1": [
-    { id: "cat-1", name: "Food", active: true },
-    { id: "cat-2", name: "Transportation", active: true },
-    { id: "cat-3", name: "Entertainment", active: true },
-    { id: "cat-4", name: "Utilities", active: true },
-    { id: "cat-5", name: "Shopping", active: false },
-  ],
+export interface CategoryDto {
+  description: string;
 }
 
 export async function getCategories(groupId: string): Promise<Category[]> {
-  // In a real app, this would fetch from an API
-  return mockCategories[groupId] || []
+  return [];
 }
 
-export async function createCategory(groupId: string, name: string): Promise<string> {
-  // In a real app, this would create a category in the database
-  if (!mockCategories[groupId]) {
-    mockCategories[groupId] = []
-  }
+export async function createCategory(
+  groupId: string,
+  dto: CategoryDto
+): Promise<string> {
+  const response = await api.post<ApiResponse<Id>>(
+    `groups/${groupId}/categories`,
+    dto
+  );
 
-  const newCategory: Category = {
-    id: `cat-${Date.now()}`,
-    name,
-    active: true,
-  }
-
-  mockCategories[groupId].push(newCategory)
-
-  return newCategory.id
+  return response.data.content.id;
 }
 
-export async function updateCategory(groupId: string, categoryId: string, data: Partial<Category>): Promise<void> {
+export async function updateCategory(
+  groupId: string,
+  categoryId: string,
+  data: Partial<Category>
+): Promise<void> {
   // In a real app, this would update the database
-  const categories = mockCategories[groupId] || []
-  const index = categories.findIndex((cat) => cat.id === categoryId)
-
-  if (index !== -1) {
-    mockCategories[groupId][index] = {
-      ...mockCategories[groupId][index],
-      ...data,
-    }
-  }
 }
 
-export async function deleteCategory(groupId: string, categoryId: string): Promise<void> {
-  // In a real app, this would update the database
-  const categories = mockCategories[groupId] || []
-  mockCategories[groupId] = categories.filter((cat) => cat.id !== categoryId)
-}
-
+export async function deleteCategory(
+  groupId: string,
+  categoryId: string
+): Promise<void> {}

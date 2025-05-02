@@ -6,15 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { StarIcon } from "lucide-react"
-import { getUserGroups, setFavoriteGroup } from "@/lib/groups"
-
-interface Group {
-  id: string
-  name: string
-  description: string
-  memberCount: number
-  isFavorite: boolean
-}
+import { getGroups, Group, setFavoriteGroup } from "@/lib/groups"
 
 export function GroupList() {
   const router = useRouter()
@@ -24,7 +16,7 @@ export function GroupList() {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const data = await getUserGroups()
+        const data = await getGroups()
         setGroups(data)
       } catch (error) {
         console.error("Failed to fetch groups:", error)
@@ -76,13 +68,13 @@ export function GroupList() {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleFavorite(group.id)}
-                className={group.isFavorite ? "text-yellow-500" : ""}
+                className={group.favorite ? "text-yellow-500" : ""}
               >
                 <StarIcon className="h-5 w-5" />
               </Button>
             </div>
             <CardDescription>
-              {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
+              {group.members} {group.members === 1 ? "member" : "members"}
             </CardDescription>
           </CardHeader>
           <CardContent>
