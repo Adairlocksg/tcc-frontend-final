@@ -91,7 +91,7 @@ export default function GroupsPage() {
       {groups?.length === 0 ? (
         <Card className="text-center p-8">
           <p className="mb-4 text-muted-foreground">
-            You haven't created any groups yet.
+            Você ainda não tem grupos criados.
           </p>
           <Button onClick={() => router.push("/groups/new")}>
             Crie seu primeiro grupo
@@ -132,7 +132,7 @@ export default function GroupsPage() {
                   onClick={() => handleEdit(group)}
                 >
                   <Pencil className="mr-1 h-3 w-3" />
-                  Edit
+                  Editar
                 </Button>
                 <Button
                   size="sm"

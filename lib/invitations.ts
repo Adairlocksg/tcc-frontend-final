@@ -2,64 +2,36 @@
 
 import { api, ApiResponse, Id } from "./api";
 
-interface Invitation {
+interface Invite {
   id: string;
   groupId: string;
-  inviterId: string;
-  inviteeId: string;
-  status: "pending" | "accepted" | "rejected";
-  createdAt: string;
+  userId: string;
+  userName: string;
+  groupName: string;
+  groupDescription: string;
+  status: InviteStatus;
 }
 
 export interface InviteDto {
   groupId: string;
 }
 
-// Mock data with expanded objects for UI display
-const mockInvitations: any[] = [
-  {
-    id: "inv-1",
-    group: {
-      id: "group-4",
-      name: "Office",
-      description: "Work expenses",
-    },
-    inviter: {
-      id: "user-2",
-      name: "Jane Smith",
-    },
-    invitee: {
-      id: "user-1",
-      name: "John Doe",
-    },
-    status: "pending",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: "inv-2",
-    group: {
-      id: "group-5",
-      name: "Family",
-      description: "Family expenses",
-    },
-    inviter: {
-      id: "user-3",
-      name: "Bob Johnson",
-    },
-    invitee: {
-      id: "user-1",
-      name: "John Doe",
-    },
-    status: "pending",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-];
+export enum InviteStatus {
+  PENDING = 0,
+  ACCEPTED = 1,
+  REJECTED = 2,
+}
 
-export async function getUserInvitations(userId: string): Promise<any[]> {
-  // In a real app, this would fetch from an API
-  return mockInvitations.filter(
-    (inv) => inv.invitee.id === userId && inv.status === "pending"
-  );
+export const inviteStatusDescription: Record<InviteStatus, string> = {
+  [InviteStatus.PENDING]: "Pendente",
+  [InviteStatus.ACCEPTED]: "Aceito",
+  [InviteStatus.REJECTED]: "Rejeitado",
+};
+
+export async function getPendingInvites(): Promise<Invite[]> {
+  const response = await api.get<ApiResponse<Invite[]>>(`invites/pending`);
+
+  return response.data.content;
 }
 
 export async function createInvite(dto: InviteDto): Promise<string> {
@@ -74,14 +46,14 @@ export async function getInviteLink(groupId: string): Promise<string> {
   return response.data.content;
 }
 
-export async function acceptInvitation(formData: FormData): Promise<void> {
-  // In a real app, this would update the database
-  const invitationId = formData.get("invitationId") as string;
-  console.log(`Accepted invitation ${invitationId}`);
+export async function acceptInvite(id: string): Promise<void> {
+  const response = await api.put<ApiResponse<void>>(`invites/${id}/accept`);
+
+  return response.data.content;
 }
 
-export async function rejectInvitation(formData: FormData): Promise<void> {
-  // In a real app, this would update the database
-  const invitationId = formData.get("invitationId") as string;
-  console.log(`Rejected invitation ${invitationId}`);
+export async function rejectInvite(id: string): Promise<void> {
+  const response = await api.put<ApiResponse<void>>(`invites/${id}/reject`);
+
+  return response.data.content;
 }

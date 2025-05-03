@@ -161,11 +161,13 @@ export default function GroupPage({
             Back
           </button>
           <div className="flex items-center gap-2">
-            <GroupLinkDialog
-              groupId={group.id}
-              open={linkDialogOpen}
-              setOpen={setLinkDialogOpen}
-            />
+            {group.admin && (
+              <GroupLinkDialog
+                groupId={group.id}
+                open={linkDialogOpen}
+                setOpen={setLinkDialogOpen}
+              />
+            )}
             <button onClick={handleFavorite}>
               <Star
                 className={`h-6 w-6 ${

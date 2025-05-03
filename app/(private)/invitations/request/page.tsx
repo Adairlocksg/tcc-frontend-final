@@ -12,7 +12,7 @@ import { useCreateInvite } from "@/hooks/use-create-invite";
 import { InviteDto } from "@/lib/invitations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@radix-ui/react-label";
-import { Bell, ChevronLeft, Loader2 } from "lucide-react";
+import { Bell, ChevronLeft, Loader2, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -67,7 +67,7 @@ export default function RequestInvitePage() {
               <Label htmlFor="link">Link de convite</Label>
               <Input
                 id="link"
-                placeholder="Ex. Casa, Viagem, Amigos"
+                placeholder="Insira o link de convite aqui"
                 {...register("link")}
               />
               {errors.link && (
@@ -78,7 +78,7 @@ export default function RequestInvitePage() {
           <CardFooter className="flex justify-end">
             <Button type="submit" disabled={isPending} className="w-full">
               Solicitar convite
-              {isPending ? <Loader2 className="animate-spin" /> : <Bell />}
+              {isPending ? <Loader2 className="animate-spin" /> : <UserPlus />}
             </Button>
           </CardFooter>
         </form>
