@@ -14,6 +14,7 @@ interface CategorySelectProps {
   selectedCategory: string;
   onChange: (categoryId: string) => void;
   includeAllOption?: boolean;
+  placeholder?: string;
 }
 
 export function CategorySelect({
@@ -21,6 +22,7 @@ export function CategorySelect({
   selectedCategory,
   onChange,
   includeAllOption = true,
+  placeholder = "Filtrar por categoria",
 }: CategorySelectProps) {
   const { data: categories, isLoading, error } = useCategories(groupId);
 
@@ -30,7 +32,7 @@ export function CategorySelect({
   return (
     <Select value={selectedCategory} onValueChange={onChange}>
       <SelectTrigger>
-        <SelectValue placeholder="Filtrar por categoria" />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {includeAllOption && (

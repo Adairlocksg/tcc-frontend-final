@@ -21,7 +21,11 @@ import {
   getGroupMembers,
   Group,
 } from "@/lib/groups";
-import { getGroupExpenses } from "@/lib/expenses";
+import {
+  getGroupExpenses,
+  RecurrenceType,
+  RecurrenceTypeDescription,
+} from "@/lib/expenses";
 import {
   format,
   startOfMonth,
@@ -35,6 +39,7 @@ import { GroupMembers } from "@/components/group-members";
 import { CategorySelect } from "@/components/category-select";
 import { useQueryClient } from "@tanstack/react-query";
 import { GroupLinkDialog } from "@/components/group-link-dialog";
+import { useExpenseSummary } from "@/hooks/use-expenses-summary";
 
 export default function GroupPage({
   params,
@@ -44,14 +49,25 @@ export default function GroupPage({
   const { id: groupId } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
+
   const [group, setGroup] = useState<Group | null>(null);
-  const [expenses, setExpenses] = useState<any[]>([]);
   const [allExpenses, setAllExpenses] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(
     format(new Date(), "yyyy-MM")
   );
+
+  const { data: expenses } = useExpenseSummary(
+    groupId,
+    startOfMonth(
+      new Date(selectedMonth).setMonth(new Date(selectedMonth).getMonth() + 1)
+    ).toISOString(),
+    endOfMonth(
+      new Date(selectedMonth).setMonth(new Date(selectedMonth).getMonth() + 1)
+    ).toISOString()
+  );
+
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -90,22 +106,22 @@ export default function GroupPage({
   });
 
   // Filter expenses by month
-  useEffect(() => {
-    if (allExpenses.length > 0) {
-      const currentMonthStart = startOfMonth(new Date(selectedMonth));
-      const currentMonthEnd = endOfMonth(new Date(selectedMonth));
+  // useEffect(() => {
+  //   if (allExpenses.length > 0) {
+  //     const currentMonthStart = startOfMonth(new Date(selectedMonth));
+  //     const currentMonthEnd = endOfMonth(new Date(selectedMonth));
 
-      const filtered = allExpenses.filter((expense) => {
-        const expenseDate = parseISO(expense.date);
-        return isWithinInterval(expenseDate, {
-          start: currentMonthStart,
-          end: currentMonthEnd,
-        });
-      });
+  //     const filtered = allExpenses.filter((expense) => {
+  //       const expenseDate = parseISO(expense.date);
+  //       return isWithinInterval(expenseDate, {
+  //         start: currentMonthStart,
+  //         end: currentMonthEnd,
+  //       });
+  //     });
 
-      setExpenses(filtered);
-    }
-  }, [allExpenses, selectedMonth]);
+  //     setExpenses(filtered);
+  //   }
+  // }, [allExpenses, selectedMonth]);
 
   const handleFavorite = async () => {
     if (!group) return;
@@ -118,10 +134,10 @@ export default function GroupPage({
     }
   };
 
-  const filteredExpenses =
-    selectedCategory === "all"
-      ? expenses
-      : expenses.filter((expense) => expense.category.id === selectedCategory);
+  // const filteredExpenses =
+  //   selectedCategory === "all"
+  //     ? expenses
+  //     : expenses.filter((expense) => expense.category.id === selectedCategory);
 
   if (isLoading) {
     return (
@@ -137,8 +153,8 @@ export default function GroupPage({
   }
 
   // Calculate total expenses for the filtered month
-  const totalExpenses = expenses.reduce(
-    (sum, expense) => sum + expense.amount,
+  const totalExpenses = expenses?.reduce(
+    (sum, expense) => sum + expense.totalValue,
     0
   );
 
@@ -208,7 +224,9 @@ export default function GroupPage({
           <Card className="bg-gradient-to-br from-teal-800/70 to-emerald-700/70 text-white">
             <CardContent className="p-3">
               <p className="text-xs font-medium">Total em despesas</p>
-              <p className="text-xl font-bold">R$ {totalExpenses.toFixed(2)}</p>
+              <p className="text-xl font-bold">
+                R$ {totalExpenses?.toFixed(2)}
+              </p>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-sky-800/70 to-blue-700/70 text-white">
@@ -245,7 +263,11 @@ export default function GroupPage({
             <Button
               size="sm"
               className="flex items-center gap-1"
-              onClick={() => router.push(`/groups/${group.id}/expenses/new`)}
+              onClick={() =>
+                router.push(
+                  `/groups/${group.id}/expenses/new?admin=${group.admin}`
+                )
+              }
             >
               <Plus className="h-4 w-4" />
               Nova despesa
@@ -262,7 +284,7 @@ export default function GroupPage({
             </div>
           )}
 
-          {filteredExpenses.length === 0 ? (
+          {expenses?.length === 0 ? (
             <div className="mt-8 text-center">
               <p className="mb-4 text-muted-foreground">
                 No expenses found for{" "}
@@ -278,28 +300,24 @@ export default function GroupPage({
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredExpenses.map((expense) => (
+              {expenses?.map((expense) => (
                 <Card key={expense.id} className="overflow-hidden">
                   <div className="flex items-start justify-between p-4">
                     <div className="flex gap-3">
-                      <Avatar className="h-10 w-10 border-2 border-muted">
-                        <AvatarFallback>
-                          {expense.user.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
                       <div>
                         <p className="font-medium">{expense.description}</p>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-xs text-muted-foreground">
-                            {expense.user.name}
+                            {expense.userName}
                           </p>
                           <span className="text-xs text-muted-foreground">
                             •
                           </span>
-                          <p className="text-xs text-muted-foreground">
+                          Data
+                          {/* <p className="text-xs text-muted-foreground">
                             {format(new Date(expense.date), "MMM d, yyyy")}
-                          </p>
-                          {expense.recurrence && (
+                          </p> */}
+                          {expense.isRecurring && (
                             <>
                               <span className="text-xs text-muted-foreground">
                                 •
@@ -308,13 +326,14 @@ export default function GroupPage({
                                 variant="outline"
                                 className="h-5 px-1 text-xs"
                               >
-                                {expense.recurrence.type === "daily" && "Daily"}
-                                {expense.recurrence.type === "weekly" &&
-                                  "Weekly"}
-                                {expense.recurrence.type === "monthly" &&
-                                  "Monthly"}
-                                {expense.recurrence.type === "custom" &&
-                                  `Every ${expense.recurrence.interval} days`}
+                                {
+                                  RecurrenceTypeDescription[
+                                    expense.recurrenceType
+                                  ]
+                                }
+                                {expense.recurrenceType ===
+                                  RecurrenceType.CUSTOM &&
+                                  ` a cada ${expense.recurrencyInterval} dias`}
                               </Badge>
                             </>
                           )}
@@ -323,10 +342,10 @@ export default function GroupPage({
                     </div>
                     <div className="flex flex-col items-end">
                       <p className="font-medium">
-                        R$ {expense.amount.toFixed(2)}
+                       Valor total: R$ {expense.totalValue.toFixed(2)}
                       </p>
                       <Badge className="mt-1" variant="secondary">
-                        {expense.category.name}
+                        {expense.categoryName}
                       </Badge>
                     </div>
                   </div>
