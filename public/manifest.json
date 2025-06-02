@@ -1,7 +1,7 @@
 {
-  "name": "Financial Management App",
-  "short_name": "FinanceTracker",
-  "description": "Track and manage expenses with friends and family",
+  "name": "Conta comigo",
+  "short_name": "Conta comigo",
+  "description": "Gerencie suas despesas e grupos de forma simples e eficiente",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

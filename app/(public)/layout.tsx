@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Conta comigo",
-  description: "Gerencie suas contas e grupos de forma simples e eficiente",
+  description: "Gerencie suas despesas e grupos de forma simples e eficiente",
   manifest: "/manifest.json",
 };
 
