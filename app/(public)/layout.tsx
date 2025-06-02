@@ -13,6 +13,7 @@ export const metadata = {
   manifest: "/manifest.json",
 };
 
+
 export default function RootLayout({
   children,
 }: {
