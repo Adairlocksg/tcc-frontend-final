@@ -29,7 +29,7 @@ export function MobileNav() {
 
   return (
     <div className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/80 backdrop-blur-md">
-      <div className="mx-auto grid h-16 max-w-lg grid-cols-5">
+      <div className="mx-auto grid h-16 max-w-lg grid-cols-4">
         <Link
           href="/"
           className={cn(
@@ -50,9 +50,9 @@ export function MobileNav() {
           )}
         >
           <Users className="mb-1 h-5 w-5" />
-          <span className="text-xs">Groups</span>
+          <span className="text-xs">Grupos</span>
         </Link>
-        <Link
+        {/* <Link
           href={
             favoriteGroupId ? `/groups/${favoriteGroupId}/expenses/new` : "/"
           }
@@ -61,7 +61,7 @@ export function MobileNav() {
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
             <Plus className="h-6 w-6 text-primary-foreground" />
           </div>
-        </Link>
+        </Link> */}
         <Link
           href="/invitations"
           className={cn(
@@ -72,7 +72,7 @@ export function MobileNav() {
           )}
         >
           <Bell className="mb-1 h-5 w-5" />
-          <span className="text-xs">Invites</span>
+          <span className="text-xs">Convites</span>
         </Link>
         <Link
           href="/profile"
@@ -84,7 +84,7 @@ export function MobileNav() {
           )}
         >
           <User className="mb-1 h-5 w-5" />
-          <span className="text-xs">Profile</span>
+          <span className="text-xs">Perfil</span>
         </Link>
       </div>
     </div>

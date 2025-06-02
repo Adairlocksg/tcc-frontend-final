@@ -15,12 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft, Filter, Plus, Star, Calendar } from "lucide-react";
-import {
-  getGroup,
-  setFavoriteGroup,
-  getGroupMembers,
-  Group,
-} from "@/lib/groups";
+import { getGroup, getGroupMembers, Group } from "@/lib/groups";
 import {
   getGroupExpenses,
   RecurrenceType,
@@ -31,8 +26,11 @@ import {
   startOfMonth,
   endOfMonth,
   subMonths,
+  addMonths,
   isWithinInterval,
   parseISO,
+  startOfDay,
+  addDays,
 } from "date-fns";
 import { CategoryList } from "@/components/category-list";
 import { GroupMembers } from "@/components/group-members";
@@ -40,6 +38,8 @@ import { CategorySelect } from "@/components/category-select";
 import { useQueryClient } from "@tanstack/react-query";
 import { GroupLinkDialog } from "@/components/group-link-dialog";
 import { useExpenseSummary } from "@/hooks/use-expenses-summary";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export default function GroupPage({
   params,
@@ -51,22 +51,34 @@ export default function GroupPage({
   const queryClient = useQueryClient();
 
   const [group, setGroup] = useState<Group | null>(null);
-  const [allExpenses, setAllExpenses] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedMonth, setSelectedMonth] = useState(
-    format(new Date(), "yyyy-MM")
-  );
+
+  const [selectedPeriod, setSelectedPeriod] = useState("current");
+  const [customRange, setCustomRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
+
+  const now = new Date();
+
+  const [filterDates, setFilterDates] = useState<{ start: Date; end: Date }>({
+    start: startOfMonth(now),
+    end: endOfMonth(now),
+  });
 
   const { data: expenses } = useExpenseSummary(
     groupId,
-    startOfMonth(
-      new Date(selectedMonth).setMonth(new Date(selectedMonth).getMonth() + 1)
-    ).toISOString(),
-    endOfMonth(
-      new Date(selectedMonth).setMonth(new Date(selectedMonth).getMonth() + 1)
-    ).toISOString()
+    filterDates.start.toISOString(),
+    filterDates.end.toISOString(),
+    selectedCategory === "all" ? null : selectedCategory
   );
+
+  const periodOptions = [
+    { value: "current", label: "Este mês" },
+    { value: "previous", label: "Mês passado" },
+    { value: "next", label: "Mês que vem" },
+    { value: "custom", label: "Personalizado" },
+  ];
 
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 
@@ -75,19 +87,39 @@ export default function GroupPage({
   const [activeTab, setActiveTab] = useState("expenses");
 
   useEffect(() => {
+    if (selectedPeriod !== "custom") {
+      const now = new Date();
+      switch (selectedPeriod) {
+        case "current":
+          setFilterDates({
+            start: startOfMonth(now),
+            end: startOfMonth(addMonths(now, 1)),
+          });
+          break;
+        case "previous":
+          setFilterDates({
+            start: startOfMonth(subMonths(now, 1)),
+            end: startOfMonth(now),
+          });
+          break;
+        case "next":
+          setFilterDates({
+            start: startOfMonth(addMonths(now, 1)),
+            end: startOfMonth(addMonths(now, 2)),
+          });
+          break;
+      }
+    }
+  }, [selectedPeriod]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const [groupData, expensesData, membersData] = await Promise.all([
-          getGroup(groupId),
-          getGroupExpenses(groupId),
-          getGroupMembers(groupId),
-        ]);
+        const [groupData] = await Promise.all([getGroup(groupId)]);
 
         setGroup(groupData);
-        setAllExpenses(expensesData);
-        setMembers(membersData);
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        toast.error("Falha ao carregar os dados do grupo.");
       } finally {
         setIsLoading(false);
       }
@@ -96,48 +128,16 @@ export default function GroupPage({
     fetchData();
   }, [groupId]);
 
-  // Generate last 12 months for the filter
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
-    const date = subMonths(new Date(), i);
-    return {
-      value: format(date, "yyyy-MM"),
-      label: format(date, "MMMM yyyy"),
-    };
-  });
-
-  // Filter expenses by month
-  // useEffect(() => {
-  //   if (allExpenses.length > 0) {
-  //     const currentMonthStart = startOfMonth(new Date(selectedMonth));
-  //     const currentMonthEnd = endOfMonth(new Date(selectedMonth));
-
-  //     const filtered = allExpenses.filter((expense) => {
-  //       const expenseDate = parseISO(expense.date);
-  //       return isWithinInterval(expenseDate, {
-  //         start: currentMonthStart,
-  //         end: currentMonthEnd,
-  //       });
-  //     });
-
-  //     setExpenses(filtered);
-  //   }
-  // }, [allExpenses, selectedMonth]);
-
   const handleFavorite = async () => {
     if (!group) return;
 
     try {
-      await setFavoriteGroup(groupId);
+      // await setFavoriteGroup(groupId);
       setGroup({ ...group, favorite: !group.favorite });
     } catch (error) {
       console.error("Failed to set favorite group:", error);
     }
   };
-
-  // const filteredExpenses =
-  //   selectedCategory === "all"
-  //     ? expenses
-  //     : expenses.filter((expense) => expense.category.id === selectedCategory);
 
   if (isLoading) {
     return (
@@ -174,7 +174,7 @@ export default function GroupPage({
             className="flex items-center text-sm text-muted-foreground"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Back
+            Voltar
           </button>
           <div className="flex items-center gap-2">
             {group.admin && (
@@ -204,21 +204,65 @@ export default function GroupPage({
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium">Month:</span>
+            <span className="text-sm font-medium">Período:</span>
           </div>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select month" />
+              <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
             <SelectContent>
-              {monthOptions.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
+              {periodOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+
+        {selectedPeriod === "custom" && (
+          <>
+            <div className="mb-4 flex gap-2">
+              <Input
+                type="date"
+                value={customRange?.start ?? ""}
+                onChange={(e) =>
+                  setCustomRange((prev) => ({
+                    start: e.target.value,
+                    end: prev?.end ?? "",
+                  }))
+                }
+              />
+              <Input
+                type="date"
+                value={customRange?.end ?? ""}
+                onChange={(e) =>
+                  setCustomRange((prev) => ({
+                    start: prev?.start ?? "",
+                    end: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <Button
+              size="sm"
+              className="mb-4"
+              disabled={!customRange?.start || !customRange?.end}
+              onClick={() => {
+                if (customRange?.start && customRange?.end) {
+                  setFilterDates({
+                    start: startOfDay(new Date(customRange.start)),
+                    end: addDays(startOfDay(new Date(customRange.end)), 1),
+                  });
+                }
+              }}
+            >
+              <Filter className="h-4 w-4" />
+              Aplicar
+            </Button>
+          </>
+        )}
 
         <div className="mb-4 grid grid-cols-2 gap-3">
           <Card className="bg-gradient-to-br from-teal-800/70 to-emerald-700/70 text-white">
@@ -244,9 +288,9 @@ export default function GroupPage({
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="expenses">Expenses</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="expenses">Despesas</TabsTrigger>
+          <TabsTrigger value="categories">Categorias</TabsTrigger>
+          <TabsTrigger value="members">Membros</TabsTrigger>
         </TabsList>
 
         <TabsContent value="expenses" className="mt-4">
@@ -258,7 +302,7 @@ export default function GroupPage({
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Filter
+              Filtros
             </Button>
             <Button
               size="sm"
@@ -287,16 +331,8 @@ export default function GroupPage({
           {expenses?.length === 0 ? (
             <div className="mt-8 text-center">
               <p className="mb-4 text-muted-foreground">
-                No expenses found for{" "}
-                {format(new Date(selectedMonth), "MMMM yyyy")}
+                Nenhuma despesa encontrada para esse período.
               </p>
-              <Button
-                onClick={() => router.push(`/groups/${groupId}/expenses/new`)}
-                className="flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add Expense
-              </Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -310,13 +346,6 @@ export default function GroupPage({
                           <p className="text-xs text-muted-foreground">
                             {expense.userName}
                           </p>
-                          <span className="text-xs text-muted-foreground">
-                            •
-                          </span>
-                          Data
-                          {/* <p className="text-xs text-muted-foreground">
-                            {format(new Date(expense.date), "MMM d, yyyy")}
-                          </p> */}
                           {expense.isRecurring && (
                             <>
                               <span className="text-xs text-muted-foreground">
@@ -342,7 +371,7 @@ export default function GroupPage({
                     </div>
                     <div className="flex flex-col items-end">
                       <p className="font-medium">
-                       Valor total: R$ {expense.totalValue.toFixed(2)}
+                        Valor total: R$ {expense.totalValue.toFixed(2)}
                       </p>
                       <Badge className="mt-1" variant="secondary">
                         {expense.categoryName}
@@ -373,17 +402,8 @@ export default function GroupPage({
         <TabsContent value="members" className="mt-4">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-medium">Membros</h3>
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex items-center gap-1"
-              onClick={() => {}}
-            >
-              <Plus className="h-4 w-4" />
-              Invite
-            </Button>
           </div>
-          <GroupMembers groupId={groupId} isAdmin={true} />
+          <GroupMembers groupId={groupId} />
         </TabsContent>
       </Tabs>
     </div>

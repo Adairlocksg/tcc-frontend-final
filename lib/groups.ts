@@ -15,6 +15,16 @@ export interface GroupDto {
   description: string;
 }
 
+export interface GroupMember {
+  id: string;
+  userName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  admin: boolean;
+  isCurrentUser: boolean;
+}
+
 export async function getGroups(): Promise<Group[]> {
   const response = await api.get<ApiResponse<Group[]>>("groups");
 
@@ -37,44 +47,19 @@ export async function updateGroup(id: string, dto: GroupDto) {
   return response.data.content.id;
 }
 
-export async function setFavoriteGroup(groupId: string): Promise<void> {
-  // In a real app, this would update the database
+export async function favoriteGroup(groupId: string) {
+  const response = await api.put<ApiResponse<Id>>(`groups/${groupId}/favorite`);
+  return response.data.content.id;
 }
 
-export async function isGroupAdmin(
-  userId: string,
-  groupId: string
-): Promise<boolean> {
-  // In a real app, this would check the database
-  // For mock purposes, we'll assume the user is an admin of all groups
-  return true;
+export async function unFavoriteGroup(groupId: string) {
+  const response = await api.put<ApiResponse<Id>>(`groups/${groupId}/unfavorite`);
+  return response.data.content.id;
 }
 
-export async function getGroupMembers(groupId: string): Promise<any[]> {
-  // In a real app, this would fetch from an API
-  return [
-    {
-      id: "user-1",
-      name: "John Doe",
-      email: "john@example.com",
-      isAdmin: true,
-      isCurrentUser: true,
-    },
-    {
-      id: "user-2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      isAdmin: false,
-      isCurrentUser: false,
-    },
-    {
-      id: "user-3",
-      name: "Bob Johnson",
-      email: "bob@example.com",
-      isAdmin: false,
-      isCurrentUser: false,
-    },
-  ];
+export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
+  const response = await api.get<ApiResponse<GroupMember[]>>(`groups/${groupId}/members`);
+  return response.data.content;
 }
 
 export async function removeGroupMember(

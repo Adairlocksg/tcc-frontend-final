@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Users, Plus, Pencil, Loader2, Save } from "lucide-react";
-import { getGroups, Group, GroupDto, setFavoriteGroup } from "@/lib/groups";
+import { Group, GroupDto } from "@/lib/groups";
 import {
   Dialog,
   DialogContent,
@@ -18,24 +18,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { useGroups } from "@/hooks/use-groups";
 import { useUpdateGroup } from "@/hooks/use-update-group";
+import { useFavoriteGroup } from "@/hooks/use-favorite-group";
+import { useUnfavoriteGroup } from "@/hooks/use-unfavorite-group";
 
 export default function GroupsPage() {
-  const { data: groups, isLoading, error } = useGroups();
+  const { data: groups, isLoading } = useGroups();
   const { mutate: updateGroup, isPending } = useUpdateGroup();
+  const { mutate: favoriteGroup } = useFavoriteGroup();
+  const { mutate: unFavoriteGroup } = useUnfavoriteGroup();
   const router = useRouter();
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleFavorite = async (groupId: string) => {
-    try {
-      toast.success("Favorite group updated");
-    } catch (error) {
-      console.error("Failed to set favorite group:", error);
-      toast.error("Failed to update favorite group");
+  const handleFavorite = async (groupId: string, favorite: boolean) => {
+    if (favorite) {
+      unFavoriteGroup(groupId);
+    } else {
+      favoriteGroup(groupId);
     }
   };
 
@@ -106,7 +108,9 @@ export default function GroupsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold">{group.name}</h3>
-                      <button onClick={() => handleFavorite(group.id)}>
+                      <button
+                        onClick={() => handleFavorite(group.id, group.favorite)}
+                      >
                         <Star
                           className={`h-5 w-5 ${
                             group.favorite

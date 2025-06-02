@@ -23,11 +23,19 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { BanknoteIcon, ChevronLeft, CircleDollarSign, Loader2, Wallet2 } from "lucide-react";
+import {
+  BanknoteIcon,
+  ChevronLeft,
+  CircleDollarSign,
+  Loader2,
+  Wallet2,
+} from "lucide-react";
 import { getGroupMembers } from "@/lib/groups";
 import { CategorySelect } from "@/components/category-select";
 import { ExpenseDto, RecurrenceType } from "@/lib/expenses";
 import { useCreateExpense } from "@/hooks/use-create-expense";
+import { MemberSelect } from "@/components/member-select";
+import { toast } from "sonner";
 
 export default function NewExpensePage({
   params,
@@ -39,6 +47,7 @@ export default function NewExpensePage({
   const searchParams = useSearchParams();
   const isAdmin = searchParams.get("admin") === "true";
   const [category, setCategory] = useState("");
+  const [member, setMember] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [value, setValue] = useState("");
@@ -47,8 +56,6 @@ export default function NewExpensePage({
     useState(false);
 
   const { mutate: createExpense, isPending } = useCreateExpense();
-
-  const [members, setMembers] = useState<any[]>([]);
   const [recurrenceType, setRecurrenceType] = useState("monthly");
   const [customInterval, setCustomInterval] = useState(1);
 
@@ -61,6 +68,11 @@ export default function NewExpensePage({
       custom: RecurrenceType.CUSTOM,
     };
 
+    if (!category) {
+      toast.error("Por favor, selecione uma categoria.");
+      return;
+    }
+    
     const dto: ExpenseDto = {
       value: Number.parseFloat(value.replace(/[^\d.-]/g, "")),
       description,
@@ -74,10 +86,9 @@ export default function NewExpensePage({
         ? recurrneceByType[recurrenceType as keyof typeof recurrneceByType]
         : null,
       recurrenceInterval: recurrenceType === "custom" ? customInterval : 0,
-      userId: null,
+      userId: member || null,
       isRecurring,
     };
-    debugger;
 
     createExpense(dto);
   };
@@ -112,7 +123,7 @@ export default function NewExpensePage({
           className="flex items-center text-sm text-muted-foreground"
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
-          Back
+          Voltar
         </button>
       </div>
 
@@ -158,19 +169,14 @@ export default function NewExpensePage({
             </div>
             {isAdmin && (
               <div className="space-y-2">
-                <Label htmlFor="user">Paid by</Label>
-                <Select name="user">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="user">Pago por</Label>
+                <MemberSelect
+                  placeholder="Selecione um membro do grupo"
+                  groupId={groupId}
+                  selectedMember={member}
+                  onChange={setMember}
+                  includeAllOption={false}
+                />
               </div>
             )}
             <div className="flex items-center space-x-2">
@@ -246,7 +252,7 @@ export default function NewExpensePage({
           <CardFooter className="flex justify-end">
             <Button type="submit" disabled={isPending} className="w-full">
               Adicionar despesa
-              {isPending ? <Loader2  className="animate-spin"/>: <Wallet2 />}
+              {isPending ? <Loader2 className="animate-spin" /> : <Wallet2 />}
             </Button>
           </CardFooter>
         </form>

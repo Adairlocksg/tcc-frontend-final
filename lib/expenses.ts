@@ -59,6 +59,7 @@ export interface ExpenseSummaryDto {
   groupId: string;
   startDate: string;
   endDate: string;
+  categoryId?: string | null;
 }
 
 export async function getGroupExpenses(groupId: string): Promise<any[]> {

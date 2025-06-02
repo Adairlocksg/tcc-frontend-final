@@ -8,10 +8,9 @@ import { ReactQueryProvider } from "@/components/react-query-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Financial Management App",
-  description: "Track and manage expenses with friends and family",
+  title: "Conta comigo",
+  description: "Gerencie suas contas e grupos de forma simples e eficiente",
   manifest: "/manifest.json",
-  generator: "v0.dev",
 };
 
 export default function RootLayout({
