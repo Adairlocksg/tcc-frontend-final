@@ -52,21 +52,9 @@ export function CategoryList({ groupId }: CategoryListProps) {
     );
   };
 
-  const handleDelete = async (categoryId: string, categoryName: string) => {
-    if (
-      confirm(
-        `Are you sure you want to delete "${categoryName}"? This action cannot be undone.`
-      )
-    ) {
-      try {
-        await deleteCategory(groupId, categoryId);
-        toast.success(`Category "${categoryName}" deleted`);
-      } catch (error) {
-        console.error("Failed to delete category:", error);
-        toast.error("Failed to delete category");
-      }
-    }
-  };
+  // const handleDelete = async (categoryId: string, categoryName: string) => {
+   
+  // };
 
   if (isLoading) {
     return (
@@ -158,14 +146,14 @@ export function CategoryList({ groupId }: CategoryListProps) {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-red-500"
                 onClick={() => handleDelete(category.id, category.description)}
               >
                 <TrashIcon className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
