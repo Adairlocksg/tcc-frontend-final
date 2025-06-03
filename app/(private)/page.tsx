@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useMainDashboard } from "@/hooks/use-main-dashboard";
 import { StatCard } from "@/components/stat-card";
 import { useRouter } from "next/navigation";
+import { GroupDashboard } from "@/lib/dashboard";
 
 export default function Dashboard() {
   const { data: dashboard, isLoading } = useMainDashboard();
@@ -97,7 +98,7 @@ export default function Dashboard() {
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">Other Groups</h2>
           <div className="space-y-4">
-            {otherGroups?.map((group) => (
+            {otherGroups?.map((group: GroupDashboard) => (
               <Link key={group.groupId} href={`/groups/${group.groupId}`}>
                 <Card className="overflow-hidden transition-all hover:shadow-md">
                   <div className="h-1 w-full bg-muted"></div>
@@ -117,7 +118,7 @@ export default function Dashboard() {
                           <Users className="h-3 w-3" /> {group.membersCount}
                         </Badge>
                         <p className="text-sm font-medium">
-                          R$ {(Math.random() * 1000).toFixed(2)}
+                          R$ {group.totalCurrentMonth.toFixed(2)}
                         </p>
                       </div>
                     </div>
