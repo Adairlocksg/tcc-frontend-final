@@ -70,7 +70,14 @@ export default function Dashboard() {
                           {favoriteGroup.membersCount}
                         </Badge>
                         <span className="text-sm font-medium">
-                          R$ {favoriteGroup.totalCurrentMonth.toFixed(2)}
+                          R${" "}
+                          {favoriteGroup.totalCurrentMonth.toLocaleString(
+                            "pt-BR",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
                         </span>
                       </div>
                     </div>
@@ -118,7 +125,11 @@ export default function Dashboard() {
                           <Users className="h-3 w-3" /> {group.membersCount}
                         </Badge>
                         <p className="text-sm font-medium">
-                          R$ {group.totalCurrentMonth.toFixed(2)}
+                          R$
+                          {group.totalCurrentMonth.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                     </div>

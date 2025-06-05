@@ -3,16 +3,16 @@
 import { api, ApiResponse, Id } from "./api";
 
 interface Expense {
-  id: string;
-  amount: number;
+  value: number;
   description: string;
-  date: string;
+  beginDate: string;
+  endDate: string | null;
   categoryId: string;
-  userId: string;
-  recurrence?: {
-    type: "daily" | "weekly" | "monthly" | "custom";
-    interval?: number;
-  };
+  groupId: string;
+  userId: string | null;
+  recurrence: RecurrenceType | null;
+  recurrenceInterval: number;
+  isRecurring: boolean;
 }
 
 export interface ExpenseDto {
@@ -28,7 +28,7 @@ export interface ExpenseDto {
   isRecurring: boolean;
 }
 
-export interface ExpenseSummary{
+export interface ExpenseSummary {
   id: string;
   totalValue: number;
   description: string;
@@ -57,8 +57,8 @@ export const RecurrenceTypeDescription: Record<RecurrenceType, string> = {
 
 export interface ExpenseSummaryDto {
   groupId: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date | string;
+  endDate: Date | string;
   categoryId?: string | null;
 }
 
@@ -66,12 +66,12 @@ export async function getGroupExpenses(groupId: string): Promise<any[]> {
   return [];
 }
 
-export async function getGroupExpensesByDateRange(
-  groupId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<any[]> {
-  return [];
+export async function getExpenseById(expenseId: string): Promise<Expense> {
+  const response = await api.post<ApiResponse<Expense>>(
+    `expenses/${expenseId}`
+  );
+
+  return response.data.content;
 }
 
 export async function getExpenseSummaryByGroup(dto: ExpenseSummaryDto) {

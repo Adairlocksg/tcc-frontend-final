@@ -7,6 +7,7 @@ export function useMainDashboard() {
   return useQuery({
     queryKey: ["main-dashboard"],
     queryFn: getMainDashboard,
+    refetchOnWindowFocus: true,
     staleTime: 100 * 60 * 5,
   });
 }

@@ -28,7 +28,13 @@ export function StatCard({ title, value, percentageChange }: StatCardProps) {
           <p className="text-sm font-medium">{title}</p>
           <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
-        <p className="mt-2 text-2xl font-bold">R$ {value.toFixed(2)}</p>
+        <p className="mt-2 text-2xl font-bold">
+          R${" "}
+          {value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </p>
         <p className="mt-1 text-xs opacity-80">
           {isPositive ? "+" : ""}
           {percentageChange.toFixed(1)}% comparado ao mês passado

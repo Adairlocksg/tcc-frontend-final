@@ -31,6 +31,7 @@ import {
   parseISO,
   startOfDay,
   addDays,
+  endOfDay,
 } from "date-fns";
 import { CategoryList } from "@/components/category-list";
 import { GroupMembers } from "@/components/group-members";
@@ -66,10 +67,10 @@ export default function GroupPage({
     end: endOfMonth(now),
   });
 
-  const { data: expenses } = useExpenseSummary(
+  const { data: expenses, isLoading: isLoadingExpenses } = useExpenseSummary(
     groupId,
-    filterDates.start.toISOString(),
-    filterDates.end.toISOString(),
+    filterDates.start,
+    filterDates.end,
     selectedCategory === "all" ? null : selectedCategory
   );
 
@@ -91,21 +92,31 @@ export default function GroupPage({
       const now = new Date();
       switch (selectedPeriod) {
         case "current":
+          const endMonth = endOfMonth(now);
+          endMonth.setDate(endMonth.getDate() - 1);
           setFilterDates({
-            start: startOfMonth(now),
-            end: startOfMonth(addMonths(now, 1)),
+            start: startOfDay(startOfMonth(now)),
+            end: endOfDay(endMonth),
           });
           break;
+
         case "previous":
+          const prevMonth = subMonths(now, 1);
+          const endOfPrevMonth = endOfMonth(prevMonth);
+          endOfPrevMonth.setDate(endOfPrevMonth.getDate() - 1);
           setFilterDates({
-            start: startOfMonth(subMonths(now, 1)),
-            end: startOfMonth(now),
+            start: startOfDay(startOfMonth(prevMonth)),
+            end: endOfDay(endOfPrevMonth),
           });
           break;
+
         case "next":
+          const nextMonth = addMonths(now, 1);
+          const endOfNextMonth = endOfMonth(nextMonth);
+          endOfNextMonth.setDate(endOfNextMonth.getDate() - 1);
           setFilterDates({
-            start: startOfMonth(addMonths(now, 1)),
-            end: startOfMonth(addMonths(now, 2)),
+            start: startOfDay(startOfMonth(nextMonth)),
+            end: endOfDay(endOfNextMonth),
           });
           break;
       }
@@ -165,6 +176,12 @@ export default function GroupPage({
     }
   };
 
+  const handleClickExpense = (expenseId: string) => {
+    router.push(
+      `/groups/${group.id}/expenses/new?expenseId=${expenseId}&admin=${group.admin}`
+    );
+  };
+
   return (
     <div className="container pb-20">
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md pb-4 pt-4">
@@ -184,7 +201,7 @@ export default function GroupPage({
                 setOpen={setLinkDialogOpen}
               />
             )}
-            <button onClick={handleFavorite}>
+            <button>
               <Star
                 className={`h-6 w-6 ${
                   group.favorite
@@ -269,7 +286,11 @@ export default function GroupPage({
             <CardContent className="p-3">
               <p className="text-xs font-medium">Total em despesas</p>
               <p className="text-xl font-bold">
-                R$ {totalExpenses?.toFixed(2)}
+                R${" "}
+                {totalExpenses?.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </CardContent>
           </Card>
@@ -337,7 +358,11 @@ export default function GroupPage({
           ) : (
             <div className="space-y-3">
               {expenses?.map((expense) => (
-                <Card key={expense.id} className="overflow-hidden">
+                <Card
+                  key={expense.id}
+                  className="overflow-hidden"
+                  onClick={() => console.log(expense)}
+                >
                   <div className="flex items-start justify-between p-4">
                     <div className="flex gap-3">
                       <div>
@@ -370,8 +395,12 @@ export default function GroupPage({
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
-                      <p className="font-medium">
-                        Valor total: R$ {expense.totalValue.toFixed(2)}
+                      <p className="font-small">
+                        Total: R${" "}
+                        {expense.totalValue.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </p>
                       <Badge className="mt-1" variant="secondary">
                         {expense.categoryName}

@@ -23,27 +23,22 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import {
-  BanknoteIcon,
-  ChevronLeft,
-  CircleDollarSign,
-  Loader2,
-  Wallet2,
-} from "lucide-react";
-import { getGroupMembers } from "@/lib/groups";
+import { ChevronLeft, Loader2, Wallet2 } from "lucide-react";
 import { CategorySelect } from "@/components/category-select";
 import { ExpenseDto, RecurrenceType } from "@/lib/expenses";
 import { useCreateExpense } from "@/hooks/use-create-expense";
 import { MemberSelect } from "@/components/member-select";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function NewExpensePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; expenseId?: string }>;
 }) {
   const router = useRouter();
-  const { id: groupId } = use(params);
+  const queryClient = useQueryClient();
+  const { id: groupId, expenseId } = use(params);
   const searchParams = useSearchParams();
   const isAdmin = searchParams.get("admin") === "true";
   const [category, setCategory] = useState("");
@@ -72,7 +67,7 @@ export default function NewExpensePage({
       toast.error("Por favor, selecione uma categoria.");
       return;
     }
-    
+
     const dto: ExpenseDto = {
       value: Number.parseFloat(value.replace(/[^\d.-]/g, "")),
       description,
@@ -90,7 +85,13 @@ export default function NewExpensePage({
       isRecurring,
     };
 
-    createExpense(dto);
+    createExpense(dto, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["expenses-summary"],
+        });
+      },
+    });
   };
 
   const formatCurrency = (e: React.ChangeEvent<HTMLInputElement>) => {
