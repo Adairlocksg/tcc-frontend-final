@@ -103,7 +103,7 @@ export default function Dashboard() {
         )}
 
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Other Groups</h2>
+          <h2 className="text-lg font-semibold">Outros grupos</h2>
           <div className="space-y-4">
             {otherGroups?.map((group: GroupDashboard) => (
               <Link key={group.groupId} href={`/groups/${group.groupId}`}>
